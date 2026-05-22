@@ -1,6 +1,6 @@
-import monngoose from 'mongoose'
+import mongoose from 'mongoose'
 
-const pgSchema = new monngoose.Schema({
+const pgSchema = new mongoose.Schema({
     pgName:{
         type:String,
         required:true
