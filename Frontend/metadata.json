@@ -1,0 +1,6 @@
+{
+  "name": "Stayfinder",
+  "description": "Paying Guest (PG) discovery, booking, owner listing management, and review platform with verified phone authentication.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
