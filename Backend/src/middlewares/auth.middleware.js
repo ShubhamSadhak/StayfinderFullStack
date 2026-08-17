@@ -9,7 +9,7 @@ export const verifyjwt = async (req,res,next)=>{
             req.headers?.authorization?.replace("Bearer ","");
 
         if(!token){
-            throw new ApiError(401,"Unauthorized");
+            throw new ApiError(401,"Please sign in to continue browsing.");
         }
 
         const decoded = jwt.verify(

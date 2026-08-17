@@ -81,7 +81,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess }) => {
       setAuthToken(res.data.accessToken);
       onSuccess();
     } else {
-      setError(res.message || 'Invalid credentials.');
+      setError(res.message || 'Invalid email or password.');
     }
   };
 

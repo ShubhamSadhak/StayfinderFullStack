@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { User } from "../models/user.model.js";
 import { VerifiedPhone } from "../models/verifiedPhone.model.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -55,11 +56,24 @@ const registerUser = asyncHandler(async (req, res) => {
         );
     }
 
-    const verifiedPhone =
-        await VerifiedPhone.findOne({
-            phoneNo,
-            verified: true
-        });
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const normalizedPhone = String(phoneNo).replace(/\D/g, '');
+
+    if (!/^[0-9]{10}$/.test(normalizedPhone)) {
+        throw new ApiError(400, "Invalid phone number");
+    }
+
+    if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        throw new ApiError(
+            400,
+            "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
+        );
+    }
+
+    const verifiedPhone = await VerifiedPhone.findOne({
+        phoneNo: normalizedPhone,
+        verified: true
+    });
 
     if (!verifiedPhone) {
         throw new ApiError(
@@ -68,52 +82,61 @@ const registerUser = asyncHandler(async (req, res) => {
         );
     }
 
-    const userExist = await User.findOne({
-        $or: [
-            { email },
-            { phoneNo }
-        ]
-    });
-
-    if (userExist) {
-        throw new ApiError(
-            409,
-            "User already exists"
-        );
+    const emailExist = await User.findOne({ email: normalizedEmail });
+    if (emailExist) {
+        throw new ApiError(409, "Email already registered");
     }
 
-    const newUser = await User.create({
-        userName,
-        phoneNo,
-        email,
-        userRole,
-        location,
-        password,
-        phoneVerified: true
-    });
-
-    const createdUser =
-        await User.findById(newUser._id)
-            .select("-password -refreshToken");
-
-    if (!createdUser) {
-        throw new ApiError(
-            500,
-            "Error while creating user"
-        );
+    const phoneExist = await User.findOne({ phoneNo: normalizedPhone });
+    if (phoneExist) {
+        throw new ApiError(409, "Phone number already registered");
     }
 
-    await VerifiedPhone.deleteOne({
-        phoneNo
-    });
+    const session = await mongoose.startSession();
 
-    return res.status(201).json(
-        new ApiResponse(
-            201,
-            createdUser,
-            "User registered successfully"
-        )
-    );
+    try {
+        session.startTransaction();
+
+        const newUser = await User.create([
+            {
+                userName,
+                phoneNo: normalizedPhone,
+                email: normalizedEmail,
+                userRole,
+                location,
+                password,
+                phoneVerified: true,
+            },
+        ], { session });
+
+        const createdUser = await User.findById(newUser[0]._id)
+            .select("-password -refreshToken")
+            .session(session);
+
+        if (!createdUser) {
+            throw new ApiError(
+                500,
+                "Error while creating user"
+            );
+        }
+
+        await VerifiedPhone.deleteOne({ phoneNo: normalizedPhone }).session(session);
+
+        await session.commitTransaction();
+
+        return res.status(201).json(
+            new ApiResponse(
+                201,
+                createdUser,
+                "User registered successfully"
+            )
+        );
+    } catch (error) {
+        await session.abortTransaction();
+        throw error;
+    } finally {
+        session.endSession();
+    }
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -127,14 +150,16 @@ const loginUser = asyncHandler(async (req, res) => {
         );
     }
 
+    const normalizedEmail = String(email).trim().toLowerCase();
+
     const user = await User.findOne({
-        email
+        email: normalizedEmail
     });
 
     if (!user) {
         throw new ApiError(
             401,
-            "Invalid email"
+            "Invalid email or password."
         );
     }
 
@@ -144,7 +169,7 @@ const loginUser = asyncHandler(async (req, res) => {
     if (!isPasswordValid) {
         throw new ApiError(
             401,
-            "Invalid password"
+            "Invalid email or password."
         );
     }
 

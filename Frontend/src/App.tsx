@@ -18,6 +18,81 @@ import { FilterState, PGListing, Review, User } from './types';
 import { api, AUTH_EXPIRED_EVENT, setAuthToken } from './api';
 import { Sparkles, Building2, SearchX, CheckCircle2, AlertCircle } from 'lucide-react';
 
+const fallbackPGs: PGListing[] = [
+  {
+    _id: 'demo-1',
+    pgName: 'The Cozy Nest',
+    owner: 'Demo Host',
+    ownerName: 'Amit Verma',
+    ownerPhone: '9876543210',
+    location: {
+      state: 'Karnataka',
+      city: 'Bangalore',
+      pincode: '560001',
+      address: 'MG Road, near Metro Station',
+    },
+    price: 8500,
+    foodAvailability: true,
+    wifiAvailability: true,
+    genderPreference: 'Male',
+    roomSharingType: 'Single',
+    availabilityStatus: 'Available',
+    description: 'Bright and secure single-room PG close to offices.',
+    amenities: ['AC', 'Locker', 'Housekeeping'],
+    images: ['https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80'],
+    ratingAverage: 4.8,
+    totalReviews: 32,
+  },
+  {
+    _id: 'demo-2',
+    pgName: 'City Lights PG',
+    owner: 'Demo Host',
+    ownerName: 'Priya Sharma',
+    ownerPhone: '9123456780',
+    location: {
+      state: 'Maharashtra',
+      city: 'Mumbai',
+      pincode: '400001',
+      address: 'Colaba Causeway, near Colaba',
+    },
+    price: 10500,
+    foodAvailability: false,
+    wifiAvailability: true,
+    genderPreference: 'Unisex',
+    roomSharingType: 'Double',
+    availabilityStatus: 'Available',
+    description: 'Modern PG in the heart of the city with high-speed Wi-Fi.',
+    amenities: ['Wifi', 'Common Lounge', '24x7 Water'],
+    images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'],
+    ratingAverage: 4.6,
+    totalReviews: 21,
+  },
+  {
+    _id: 'demo-3',
+    pgName: 'Green Court Residency',
+    owner: 'Demo Host',
+    ownerName: 'Rahul Gupta',
+    ownerPhone: '9988776655',
+    location: {
+      state: 'Tamil Nadu',
+      city: 'Chennai',
+      pincode: '600028',
+      address: 'Anna Nagar West, near bus stand',
+    },
+    price: 7800,
+    foodAvailability: true,
+    wifiAvailability: false,
+    genderPreference: 'Female',
+    roomSharingType: 'Triple',
+    availabilityStatus: 'Available',
+    description: 'Comfortable shared rooms for students and young professionals.',
+    amenities: ['Power Backup', 'Laundry', 'Housekeeping'],
+    images: ['https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=800&q=80'],
+    ratingAverage: 4.7,
+    totalReviews: 18,
+  },
+];
+
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [pgs, setPgs] = useState<PGListing[]>([]);
@@ -74,8 +149,8 @@ export default function App() {
     if (res.success && res.data?.pgs) {
       setPgs(res.data.pgs);
     } else {
-      setPgs([]);
-      setPgError(res.message || 'Unable to load PG listings right now.');
+      setPgs(fallbackPGs);
+      setPgError(res.message || 'Unable to load PG listings right now. Showing a few sample stays.');
     }
     setLoadingPGs(false);
   };
@@ -269,11 +344,6 @@ export default function App() {
             <AlertCircle className="w-4 h-4 text-black shrink-0 mt-0.5" />
             <div className="space-y-1">
               <p className="font-bold text-black">{pgError}</p>
-              {!currentUser && (
-                <p className="text-zinc-500 italic">
-                  The current backend requires authentication before listing PG properties. Sign in to continue browsing.
-                </p>
-              )}
             </div>
           </div>
         )}
